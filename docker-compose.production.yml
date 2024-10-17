@@ -1,0 +1,47 @@
+#  скопировал с foodgram'а. Нужно переделать.
+volumes:
+  pg_data_production:
+  static_volume:
+  media_volume:
+
+services:
+  db:
+    image: postgres:13-alpine
+    env_file: .env
+    volumes:
+      - pg_data_production:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    image: kentiy2717/foodgram_backend
+    env_file: .env
+    volumes:
+      - static_volume:/app/collected_static/
+      - media_volume:/app/media/
+    depends_on:
+      - db
+    restart: always
+
+  frontend:
+    env_file: .env
+    image: kentiy2717/foodgram_frontend
+    volumes:
+      - ./frontend/:/app/result_build/
+
+  gateway:
+    image: nginx:alpine-slim
+    env_file: .env
+    volumes:
+      - static_volume:/var/html/static/
+      - media_volume:/var/html/media/
+      - ./frontend/build:/usr/share/nginx/html/
+      - ./docs/:/usr/share/nginx/html/api/docs/
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+      - frontend
+    restart: always
+
+     
